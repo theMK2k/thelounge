@@ -6,7 +6,8 @@ const socket = io({
 	transports: JSON.parse(document.body.dataset.transports),
 	path: window.location.pathname + "socket.io/",
 	autoConnect: false,
-	reconnection: !document.body.classList.contains("public"),
+	// reconnection: !document.body.classList.contains("public"),
+	reconnection: true, // MK2k: we also want to reconnect in public mode
 });
 
 // Ease debugging socket during development
