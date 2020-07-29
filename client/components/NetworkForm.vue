@@ -3,7 +3,7 @@
 		<div class="header">
 			<SidebarToggle />
 		</div>
-		<form class="container" method="post" action="" @submit.prevent="onSubmit">
+		<form ref="form" class="container" method="post" action="" @submit.prevent="onSubmit">
 			<h1 class="title">
 				<template v-if="defaults.uuid">
 					<input v-model="defaults.uuid" type="hidden" name="uuid" />
@@ -12,7 +12,7 @@
 				<template v-else>
 					Connect
 					<template v-if="config.lockNetwork && $store.state.serverConfiguration.public">
-						to {{ defaults.name }}
+						to {{ defaults.name }} {{ defaults.join }}
 					</template>
 				</template>
 			</h1>
@@ -132,7 +132,7 @@
 
 			<h2>User preferences</h2>
 			<div class="connect-row">
-				<label for="connect:nick">Nick</label>
+				<label for="connect:nick">Nickname</label>
 				<input
 					id="connect:nick"
 					v-model="defaults.nick"
@@ -145,7 +145,8 @@
 				/>
 			</div>
 			<template v-if="!config.useHexIp">
-				<div class="connect-row">
+				<div v-show="false" class="connect-row">
+					<!-- MK2k: we don't need that -->
 					<label for="connect:username">Username</label>
 					<input
 						id="connect:username"
@@ -157,7 +158,8 @@
 					/>
 				</div>
 			</template>
-			<div class="connect-row">
+			<div v-show="false" class="connect-row">
+				<!-- MK2k: we don't need that -->
 				<label for="connect:realname">Real name</label>
 				<input
 					id="connect:realname"
@@ -191,7 +193,8 @@ the server tab on new connection"
 				</div>
 			</template>
 			<template v-else-if="!defaults.uuid">
-				<div class="connect-row">
+				<div v-show="false" class="connect-row">
+					<!-- MK2k: we don't need that -->
 					<label for="connect:channels">Channels</label>
 					<input
 						id="connect:channels"
@@ -204,7 +207,8 @@ the server tab on new connection"
 
 			<template v-if="$store.state.serverConfiguration.public">
 				<template v-if="config.lockNetwork">
-					<div class="connect-row">
+					<div v-show="false" class="connect-row">
+						<!-- MK2k: we don't need that -->
 						<label></label>
 						<div class="input-wrap">
 							<label class="tls">
@@ -213,7 +217,8 @@ the server tab on new connection"
 							</label>
 						</div>
 					</div>
-					<div v-if="displayPasswordField" class="connect-row">
+					<div v-show="false" v-if="displayPasswordField" class="connect-row">
+						<!-- MK2k: we don't need that -->
 						<label for="connect:password">Password</label>
 						<RevealPassword
 							v-slot:default="slotProps"
@@ -318,6 +323,11 @@ the server tab on new connection"
 					<template v-if="defaults.uuid">Save network</template>
 					<template v-else>Connect</template>
 				</button>
+				<!-- 
+				<button v-if="autoConnect.enabled" type="button" class="btn" @click="autoConnect.enabled = false">
+					Autoconnect in {{autoConnect.counter}} - click to cancel
+				</button>
+				-->
 			</div>
 		</form>
 	</div>
@@ -371,6 +381,11 @@ export default {
 			config: this.$store.state.serverConfiguration,
 			previousUsername: this.defaults.username,
 			displayPasswordField: false,
+
+			autoConnect: {
+				counter: 5,
+				enabled: false,
+			},
 		};
 	},
 	watch: {
@@ -393,6 +408,38 @@ export default {
 			}
 		},
 	},
+
+	created() {
+		// MK2k: restore nick from localStorage
+		const storedNick = localStorage.getItem("nick");
+
+		if (storedNick) {
+			this.defaults.nick = storedNick;
+
+			// MK2k: we want to auto-connect if nick is available
+			/*
+			this.autoConnect.enabled = true;
+
+			const interval = setInterval(() => {
+				this.autoConnect.counter--;
+
+				if (this.autoConnect.counter === 0) {
+					this.autoConnect.enabled = false;
+
+					clearInterval(interval);
+
+					// TODO: autoconnect!
+					if (this.autoConnect.enabled) {
+						// this.onSubmit(null);
+						this.$refs.form.submit();
+					}
+
+				}
+			}, 1000);
+			*/
+		}
+	},
+
 	methods: {
 		setSaslAuth(type) {
 			this.defaults.sasl = type;
@@ -415,6 +462,11 @@ export default {
 		onSubmit(event) {
 			const formData = new FormData(event.target);
 			const data = {};
+
+			// MK2k: we want to store the nickname in localStorage
+			if (this.defaults.nick) {
+				localStorage.setItem("nick", this.defaults.nick);
+			}
 
 			for (const item of formData.entries()) {
 				data[item[0]] = item[1];
